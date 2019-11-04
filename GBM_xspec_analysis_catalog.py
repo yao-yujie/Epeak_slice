@@ -459,15 +459,15 @@ for n in range(1,nl):
 	det1=['n0','n1','n2','n3','n4','n5','n6','n7','n8','n9','na','nb','b0','b1']
 	mask = [m.start() for m in re.finditer('1', scat_detector_mask_str[number])]
 	l=len(mask)
+	print(mask)
 	grb=GRB(bnname)
 	c=[0.925552,1.825552,5.375552,7.825552,10.275552,14.475552]
 	z=len(c)
-	grb.rawlc(viewt1=-50,viewt2=300,binwidth=0.075)
-	grb.base(baset1=-50,baset2=200,binwidth=0.075)
+	grb.rawlc(viewt1=-50,viewt2=300,binwidth=0.064)
+	grb.base(baset1=-50,baset2=200,binwidth=0.064)
 	for i in range(z-1):
 		grb.phaI(slicet1=c[i],slicet2=c[i+1])        
 		grb.specanalyze('slice'+str(i))
-	#grb.specanalyze('slice'+str(i))
 	#grb.removebase()
 	
 tem.close()
