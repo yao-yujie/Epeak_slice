@@ -3,6 +3,7 @@
 
 from astropy.io import fits
 from astropy.time import Time
+from astropy.stats import bayesian_blocks
 import matplotlib.pyplot as plt
 from glob import glob
 import pandas as pd
@@ -446,6 +447,54 @@ class GRB:
 	def removebase(self):
 		os.system('rm -rf '+self.baseresultdir)
 
+	def bbduration(self,lcbinwidth=0.05,gamma=1e-300):
+		det=['n3','n4']
+		#datafile='/home/yao/burstdownloadyears/2009/bn090809978'
+		file = glob(self.datadir+'glg_tte_'+det[0]+'_'+self.bnname+'_v*.fit') 
+		print(file)
+		fitfile=file[0]
+		hdu=fits.open(fitfile)
+		data=hdu['events'].data['time']
+		trigtime=hdu[0].header['trigtime']
+		time=data-trigtime
+		tte=time[(time>-10)&(time<50)]
+		fig = plt.figure()
+		ax1 = fig.add_subplot(111)
+		ax2 = ax1.twinx()
+		edges=np.arange(tte[0],tte[-1]+lcbinwidth,lcbinwidth)
+		histvalue, histbin =np.histogram(tte,bins=edges)
+		plottime=histbin
+		plotrate=histvalue/lcbinwidth
+		plotrate=np.concatenate(([plotrate[0]],plotrate))
+		ax1.plot(plottime,plotrate,linestyle='steps',color='lightgreen')
+		edges = bayesian_blocks(plottime,plotrate,fitness='events',p0=1e-1, gamma=1e-300)
+		histvalue, histbin =np.histogram(tte,bins=edges)
+		plottime=histbin
+		plotrate=histvalue/(histbin[1:]-histbin[:-1])
+		plotrate=np.concatenate(([plotrate[0]],plotrate)) 
+		ax1.plot(plottime,plotrate,linestyle='steps',color='b')
+		ax1.set_xlabel('time')
+		ax1.set_ylabel('Count')
+		l=len(edges)
+		print(edges[1:-1])
+
+		x=[]
+		for i  in range(l-3):    
+			s=(edges[i+1]+edges[i+2])/2
+			x.append(s)
+		print('x',x)
+		df=pd.read_excel('epeak.xlsx')
+		y=  df['E'].values
+		yp1=df['error-p'].values
+		yn1=df['error-n'].values
+		yerr=[yp1,yn1]
+		print('y',y)
+		ax2.scatter(x,y,color='black', zorder=2,marker = '.',s=50.)    
+		ax2.errorbar(x,y,yerr,zorder=1, fmt='o',color = '0.15',markersize=1e-50)
+		ax2.set_ylabel('Epeak')
+		plt.savefig('bbdurations.png')
+
+
 for n in range(1,nl):
 	os.chdir('/home/yao/Study/Epeak_slice')    
 	bnname=name[n]
@@ -465,6 +514,7 @@ for n in range(1,nl):
 	z=len(c)
 	grb.rawlc(viewt1=-50,viewt2=300,binwidth=0.064)
 	grb.base(baset1=-50,baset2=200,binwidth=0.064)
+	grb.bbduration(lcbinwidth=0.05,gamma=1e-300)
 	for i in range(z-1):
 		grb.phaI(slicet1=c[i],slicet2=c[i+1])        
 		grb.specanalyze('slice'+str(i))
