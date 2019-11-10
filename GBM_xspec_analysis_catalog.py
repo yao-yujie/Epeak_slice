@@ -41,6 +41,8 @@ ch2=124
 ncore=10
 
 
+time_slice=[]
+
 def get_usersjar():
     usersjar = "/home/yao/Software/users.jar"
     return usersjar
@@ -408,7 +410,7 @@ class GRB:
 		Fit.perform()
 
 		par3=AllModels(1)(3)
-		print(bnname,Epeak,par3.values[0],par3.error,end='',file=tem)
+		print(bnname,Epeak,par3.values[0],par3.error[0],par3.error[1],end='',file=tem)
 		print(' ',end="\n",file=tem)
 
 		
@@ -476,8 +478,12 @@ class GRB:
 		ax1.set_xlabel('time')
 		ax1.set_ylabel('Count')
 		l=len(edges)
-		print(edges[1:-1])
-
+		#print(edges[1:-1])
+		for i in range(1,l-1):
+			time_slice.append(edges[i])
+		
+		print(time_slice)
+		
 		x=[]
 		for i  in range(l-3):    
 			s=(edges[i+1]+edges[i+2])/2
@@ -510,14 +516,18 @@ for n in range(1,nl):
 	l=len(mask)
 	print(mask)
 	grb=GRB(bnname)
-	c=[0.925552,1.825552,5.375552,7.825552,10.275552,14.475552]
-	z=len(c)
-	grb.rawlc(viewt1=-50,viewt2=300,binwidth=0.064)
-	grb.base(baset1=-50,baset2=200,binwidth=0.064)
+	grb.bbduration(lcbinwidth=0.05,gamma=1e-300)
+
+	
+	#time_slice=[0.925552,1.825552,5.375552,7.825552,10.275552,14.475552]
+	z=len(time_slice)
+	print('time_slice:',time_slice)
+	grb.rawlc(viewt1=-50,viewt2=300,binwidth=0.07)
+	grb.base(baset1=-50,baset2=200,binwidth=0.07)
 	grb.bbduration(lcbinwidth=0.05,gamma=1e-300)
 	for i in range(z-1):
-		grb.phaI(slicet1=c[i],slicet2=c[i+1])        
+		grb.phaI(slicet1=time_slice[i],slicet2=time_slice[i+1])        
 		grb.specanalyze('slice'+str(i))
 	#grb.removebase()
-	
+
 tem.close()
