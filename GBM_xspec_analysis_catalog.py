@@ -497,6 +497,7 @@ class GRB:
 		print('y',y)
 		ax2.scatter(x,y,color='black', zorder=2,marker = '.',s=50.)    
 		ax2.errorbar(x,y,yerr,zorder=1, fmt='o',color = '0.15',markersize=1e-50)
+		ax2.set_ylim(0,700)
 		ax2.set_ylabel('Epeak')
 		plt.savefig('bbdurations.png')
 
@@ -518,6 +519,8 @@ for n in range(1,nl):
 	grb=GRB(bnname)
 	grb.bbduration(lcbinwidth=0.05,gamma=1e-300)
 
+	
+	#time_slice=[0.925552,1.825552,5.375552,7.825552,10.275552,14.475552]
 	z=len(time_slice)
 	print('time_slice:',time_slice)
 	grb.rawlc(viewt1=-50,viewt2=300,binwidth=0.07)
