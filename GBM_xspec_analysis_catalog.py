@@ -518,8 +518,6 @@ for n in range(1,nl):
 	grb=GRB(bnname)
 	grb.bbduration(lcbinwidth=0.05,gamma=1e-300)
 
-	
-	#time_slice=[0.925552,1.825552,5.375552,7.825552,10.275552,14.475552]
 	z=len(time_slice)
 	print('time_slice:',time_slice)
 	grb.rawlc(viewt1=-50,viewt2=300,binwidth=0.07)
