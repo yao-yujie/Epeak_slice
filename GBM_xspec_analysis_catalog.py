@@ -517,6 +517,7 @@ class GRB:
 		print('y',y)
 		ax2.scatter(x,y,color='black', zorder=2,marker = '.',s=50.)    
 		ax2.errorbar(x,y,yerr,zorder=1, fmt='o',color = '0.15',markersize=1e-50)
+		#ax2.errorbar(x,y,zorder=1, fmt='o',color = '0.15',markersize=1e-50)
 		ax2.set_ylim(0,700)
 		ax2.set_ylabel('Epeak')
 		plt.savefig('bbdurations.png')
