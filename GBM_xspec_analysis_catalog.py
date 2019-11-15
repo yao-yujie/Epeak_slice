@@ -469,7 +469,6 @@ class GRB:
 
 	def bbduration(self,lcbinwidth=0.05,gamma=1e-300):
 		det=['n3','n4']
-		#datafile='/home/yao/burstdownloadyears/2009/bn090809978'
 		file = glob(self.datadir+'glg_tte_'+det[0]+'_'+self.bnname+'_v*.fit') 
 		print(file)
 		fitfile=file[0]
@@ -501,25 +500,28 @@ class GRB:
 			time_slice.append(edges[i])
 		
 		print(time_slice)
-'''		
+		
 		x=[]
 		for i  in range(l-3):    
 			s=(edges[i+1]+edges[i+2])/2
 			x.append(s)
 		print('x',x)
-		df=pd.read_excel('epeak.xlsx')
-		y=  df['E'].values
-		yp1=df['error-p'].values
-		yn1=df['error-n'].values
+
+
+		os.chdir(self.resultdir)
+		df=h5py.File("data.h5", mode="r")
+		y=  df['epeak']
+		yp1=df['epeak_error_p']
+		yn1=df['epeak_error_n']
 		yerr=[yp1,yn1]
 		print('y',y)
 		ax2.scatter(x,y,color='black', zorder=2,marker = '.',s=50.)    
-		#ax2.errorbar(x,y,yerr,zorder=1, fmt='o',color = '0.15',markersize=1e-50)
+		ax2.errorbar(x,y,yerr,zorder=1, fmt='o',color = '0.15',markersize=1e-50)
 		ax2.set_ylim(0,700)
 		ax2.set_ylabel('Epeak')
 		plt.savefig('bbdurations.png')
 
-'''
+
 for n in range(1,nl):
 	os.chdir('/home/yao/Study/Epeak_slice')    
 	bnname=name[n]
