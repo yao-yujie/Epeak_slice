@@ -44,7 +44,8 @@ ncore=10
 time_slice=[]
 
 epeak=[]
-
+epeak_error_p=[]
+epeak_error_n=[]
 
 
 def get_usersjar():
@@ -417,16 +418,6 @@ class GRB:
 		Plot.yLog=True
 		Plot('eeufspec')
 
-		par3=AllModels(1)(3)
-		#print(bnname,Epeak,par3.values[0],par3.error[0],par3.error[1],end='',file=tem)
-		#print(' ',end="\n",file=tem)
-		os.chdir(self.resultdir)
-		f = h5py.File("data.h5", mode="w")
-		a=par3.values[0]
-		epeak.append(a)
-		print(a)
-		f.flush()
-		f.close()		
 
 
 		for i in range(1,1+l):
@@ -456,9 +447,26 @@ class GRB:
 		plt.savefig('eeufspec.png')
 		plt.close()		
 
+		par3=AllModels(1)(3)
+		#print(bnname,Epeak,par3.values[0],par3.error[0],par3.error[1],end='',file=tem)
+		#print(' ',end="\n",file=tem)
+		os.chdir(self.resultdir)
+		f = h5py.File("data.h5", mode="w")
+		epeak.append(par3.values[0])
+		epeak_error_p.append(par3.error[0])
+		epeak_error_n.append(par3.error[1])
+		f["epeak"]=np.array(epeak)
+		f["epeak_error_p"]=np.array(epeak_error_p)
+		f["epeak_error_n"]=np.array(epeak)
+
+		f.flush()
+		f.close()		
+
+
+
 	def removebase(self):
 		os.system('rm -rf '+self.baseresultdir)
-'''
+
 	def bbduration(self,lcbinwidth=0.05,gamma=1e-300):
 		det=['n3','n4']
 		#datafile='/home/yao/burstdownloadyears/2009/bn090809978'
@@ -493,7 +501,7 @@ class GRB:
 			time_slice.append(edges[i])
 		
 		print(time_slice)
-		
+'''		
 		x=[]
 		for i  in range(l-3):    
 			s=(edges[i+1]+edges[i+2])/2
@@ -527,7 +535,7 @@ for n in range(1,nl):
 	l=len(mask)
 	print(mask)
 	grb=GRB(bnname)
-	#grb.bbduration(lcbinwidth=0.05,gamma=1e-300)
+	grb.bbduration(lcbinwidth=0.05,gamma=1e-300)
 	z=len(time_slice)
 	print('time_slice:',time_slice)
 	grb.rawlc(viewt1=-50,viewt2=300,binwidth=0.07)
@@ -539,4 +547,6 @@ for n in range(1,nl):
 	#grb.removebase()
 	print('epeak',epeak)
 	epeak=[]
+	epeak_error_p=[]
+	epeak_error_n=[]
 #tem.close()
