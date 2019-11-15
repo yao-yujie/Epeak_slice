@@ -43,6 +43,10 @@ ncore=10
 
 time_slice=[]
 
+epeak=[]
+
+
+
 def get_usersjar():
     usersjar = "/home/yao/Software/users.jar"
     return usersjar
@@ -83,7 +87,7 @@ burst_number = len(trigger_name)
 print('burst_number = ',burst_number)
 
 
-tem=open('tem.txt','w')
+#tem=open('tem.txt','w')
 
 
 #for i in mask[:]:
@@ -407,17 +411,23 @@ class GRB:
 		Fit.perform()
 
 		Fit.error('3.0 3')
-		Fit.perform()
-
-		par3=AllModels(1)(3)
-		print(bnname,Epeak,par3.values[0],par3.error[0],par3.error[1],end='',file=tem)
-		print(' ',end="\n",file=tem)
-
-		
-		Plot.device='/xs'
+		Fit.perform()		
+		Plot.device='/null'
 		Plot.xAxis='keV'
 		Plot.yLog=True
 		Plot('eeufspec')
+
+		par3=AllModels(1)(3)
+		#print(bnname,Epeak,par3.values[0],par3.error[0],par3.error[1],end='',file=tem)
+		#print(' ',end="\n",file=tem)
+		os.chdir(self.resultdir)
+		f = h5py.File("data.h5", mode="w")
+		a=par3.values[0]
+		epeak.append(a)
+		print(a)
+		f.flush()
+		f.close()		
+
 
 		for i in range(1,1+l):
 			energies=Plot.x(i)
@@ -448,7 +458,7 @@ class GRB:
 
 	def removebase(self):
 		os.system('rm -rf '+self.baseresultdir)
-
+'''
 	def bbduration(self,lcbinwidth=0.05,gamma=1e-300):
 		det=['n3','n4']
 		#datafile='/home/yao/burstdownloadyears/2009/bn090809978'
@@ -496,12 +506,12 @@ class GRB:
 		yerr=[yp1,yn1]
 		print('y',y)
 		ax2.scatter(x,y,color='black', zorder=2,marker = '.',s=50.)    
-		ax2.errorbar(x,y,yerr,zorder=1, fmt='o',color = '0.15',markersize=1e-50)
+		#ax2.errorbar(x,y,yerr,zorder=1, fmt='o',color = '0.15',markersize=1e-50)
 		ax2.set_ylim(0,700)
 		ax2.set_ylabel('Epeak')
 		plt.savefig('bbdurations.png')
 
-
+'''
 for n in range(1,nl):
 	os.chdir('/home/yao/Study/Epeak_slice')    
 	bnname=name[n]
@@ -517,10 +527,7 @@ for n in range(1,nl):
 	l=len(mask)
 	print(mask)
 	grb=GRB(bnname)
-	grb.bbduration(lcbinwidth=0.05,gamma=1e-300)
-
-	
-	#time_slice=[0.925552,1.825552,5.375552,7.825552,10.275552,14.475552]
+	#grb.bbduration(lcbinwidth=0.05,gamma=1e-300)
 	z=len(time_slice)
 	print('time_slice:',time_slice)
 	grb.rawlc(viewt1=-50,viewt2=300,binwidth=0.07)
@@ -530,5 +537,6 @@ for n in range(1,nl):
 		grb.phaI(slicet1=time_slice[i],slicet2=time_slice[i+1])        
 		grb.specanalyze('slice'+str(i))
 	#grb.removebase()
-
-tem.close()
+	print('epeak',epeak)
+	epeak=[]
+#tem.close()
