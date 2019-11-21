@@ -91,9 +91,7 @@ print('burst_number = ',burst_number)
 #tem=open('tem.txt','w')
 
 
-#for i in mask[:]:
-#	use_mask=det1[i]+'.pha'
-#	print(use_mask)
+
 
 def norm_pvalue(sigma=2.0):
 	p = stats.norm.cdf(sigma)-stats.norm.cdf(-sigma)
@@ -216,7 +214,7 @@ class GRB:
 			self.GTI1=np.max(GTI_t1)
 			self.GTI2=np.min(GTI_t2)
 
-
+		
 	def rawlc(self,viewt1=-50,viewt2=300,binwidth=0.1):		
 		viewt1=np.max([self.GTI1,viewt1])
 		viewt2=np.min([self.GTI2,viewt2])
@@ -448,30 +446,59 @@ class GRB:
 		plt.close()		
 
 		par3=AllModels(1)(3)
-		#print(bnname,Epeak,par3.values[0],par3.error[0],par3.error[1],end='',file=tem)
-		#print(' ',end="\n",file=tem)
-		os.chdir(self.resultdir)
-		f = h5py.File("data.h5", mode="w")
+		f = h5py.File(self.resultdir+"/data.h5", mode="w")
 		epeak.append(par3.values[0])
 		epeak_error_p.append(par3.error[0])
 		epeak_error_n.append(par3.error[1])
+		f = h5py.File("data.h5", mode="w")
 		f["epeak"]=np.array(epeak)
 		f["epeak_error_p"]=np.array(epeak_error_p)
-		f["epeak_error_n"]=np.array(epeak)
+		f["epeak_error_n"]=np.array(epeak_error_n)
 
 		f.flush()
 		f.close()		
 
-
+		
 
 	def removebase(self):
 		os.system('rm -rf '+self.baseresultdir)
 
-	def bbduration(self,lcbinwidth=0.05,gamma=1e-300):
+	def timeslice(self,lcbinwidth=0.05,gamma=1e-300):
 		det=['n3','n4']
 		file = glob(self.datadir+'glg_tte_'+det[0]+'_'+self.bnname+'_v*.fit') 
 		print(file)
 		fitfile=file[0]
+		
+		hdu=fits.open(fitfile)
+		data=hdu['events'].data['time']
+		trigtime=hdu[0].header['trigtime']
+		time=data-trigtime
+		tte=time[(time>-10)&(time<50)]
+		fig = plt.figure()
+		
+		edges=np.arange(tte[0],tte[-1]+lcbinwidth,lcbinwidth)
+		histvalue, histbin =np.histogram(tte,bins=edges)
+		plottime=histbin
+		plotrate=histvalue/lcbinwidth
+		plotrate=np.concatenate(([plotrate[0]],plotrate))
+		
+		edges = bayesian_blocks(plottime,plotrate,fitness='events',p0=1e-1, gamma=1e-300)
+		histvalue, histbin =np.histogram(tte,bins=edges)
+		plottime=histbin
+		plotrate=histvalue/(histbin[1:]-histbin[:-1])
+		plotrate=np.concatenate(([plotrate[0]],plotrate)) 
+
+		l=len(edges)		
+		for i in range(1,l-1):
+			time_slice.append(edges[i])
+		print(time_slice)
+
+	def bbduration(self,lcbinwidth=0.05,gamma=1e-300):
+		os.chdir(self.resultdir)
+		det=['n3','n4']
+		file = glob(self.datadir+'glg_tte_'+det[0]+'_'+self.bnname+'_v*.fit') 
+		print(file)
+		fitfile=file[0]	
 		hdu=fits.open(fitfile)
 		data=hdu['events'].data['time']
 		trigtime=hdu[0].header['trigtime']
@@ -494,11 +521,9 @@ class GRB:
 		ax1.plot(plottime,plotrate,linestyle='steps',color='b')
 		ax1.set_xlabel('time')
 		ax1.set_ylabel('Count')
-		l=len(edges)
-		#print(edges[1:-1])
+		l=len(edges)		
 		for i in range(1,l-1):
 			time_slice.append(edges[i])
-		
 		print(time_slice)
 		
 		x=[]
@@ -506,18 +531,15 @@ class GRB:
 			s=(edges[i+1]+edges[i+2])/2
 			x.append(s)
 		print('x',x)
-
-
-		os.chdir(self.resultdir)
-		df=h5py.File("data.h5", mode="r")
-		y=  df['epeak']
-		yp1=df['epeak_error_p']
-		yn1=df['epeak_error_n']
-		yerr=[yp1,yn1]
-		print('y',y)
-		ax2.scatter(x,y,color='black', zorder=2,marker = '.',s=50.)    
-		ax2.errorbar(x,y,yerr,zorder=1, fmt='o',color = '0.15',markersize=1e-50)
-		#ax2.errorbar(x,y,zorder=1, fmt='o',color = '0.15',markersize=1e-50)
+		#df=h5py.File("data.h5", mode="r")
+		#y=  df["epeak"]
+		#yp1=df["epeak_error_p"]
+		#yn1=df["epeak_error_n"]
+		yerr=[epeak_error_p,epeak_error_n]
+		
+		ax2.scatter(x,epeak,color='black', zorder=2,marker = '.',s=50.)    
+		ax2.errorbar(x,epeak,yerr,zorder=1, fmt='o',color = '0.15',markersize=1e-50)
+		
 		ax2.set_ylim(0,700)
 		ax2.set_ylabel('Epeak')
 		plt.savefig('bbdurations.png')
@@ -538,18 +560,19 @@ for n in range(1,nl):
 	l=len(mask)
 	print(mask)
 	grb=GRB(bnname)
-	grb.bbduration(lcbinwidth=0.05,gamma=1e-300)
+	grb.timeslice(lcbinwidth=0.05,gamma=1e-300)
 	z=len(time_slice)
 	print('time_slice:',time_slice)
 	grb.rawlc(viewt1=-50,viewt2=300,binwidth=0.07)
 	grb.base(baset1=-50,baset2=200,binwidth=0.07)
-	grb.bbduration(lcbinwidth=0.05,gamma=1e-300)
 	for i in range(z-1):
 		grb.phaI(slicet1=time_slice[i],slicet2=time_slice[i+1])        
 		grb.specanalyze('slice'+str(i))
-	#grb.removebase()
+	
 	print('epeak',epeak)
+	grb.bbduration(lcbinwidth=0.05,gamma=1e-300)
 	epeak=[]
 	epeak_error_p=[]
 	epeak_error_n=[]
+	
 #tem.close()
