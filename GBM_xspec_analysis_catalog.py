@@ -465,9 +465,10 @@ class GRB:
 
 	def timeslice(self,lcbinwidth=0.05,gamma=1e-300):
 		det=['n3','n4']
-		file = glob(self.datadir+'glg_tte_'+det[0]+'_'+self.bnname+'_v*.fit') 
-		print(file)
-		fitfile=file[0]
+		for i in range(1):
+			file = glob(self.datadir+'glg_tte_'+det2[i]+'_'+self.bnname+'_v*.fit') 	
+			print(file)
+		fitfile=file
 		
 		hdu=fits.open(fitfile)
 		data=hdu['events'].data['time']
